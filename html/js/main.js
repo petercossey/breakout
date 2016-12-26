@@ -51,7 +51,7 @@ var ball = {
     y: canvas.height-30,
     dx: 2,
     dy: -2,
-    fillStyle: "#0095DD",
+    fillStyle: "#07a",
     radius: 10
 }
 
@@ -68,16 +68,19 @@ ball.update = function() {
     if (ball.x + ball.dx < ball.radius || ball.x + ball.dx > canvas.width-ball.radius) {
         ball.dx = -ball.dx;
     }
+    // ball hitting paddle
+    if (ball.y + ball.dy > canvas.height-ball.radius-paddle.height &&
+        ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+        ball.dy = -ball.dy;
+    }
+    // ball hitting roof or missing paddle
     if (ball.y + ball.dy < ball.radius) {
         ball.dy = -ball.dy;
     } else if (ball.y + ball.dy > canvas.height-ball.radius) {
-        if (ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
-            ball.dy = -ball.dy;
-        } else {
-            alert("GAME OVER");
-            document.location.reload();
-        }
+        alert("GAME OVER");
+        document.location.reload();
     }
+    
     ball.x += ball.dx;
     ball.y += ball.dy;
 }
@@ -88,7 +91,7 @@ var paddle = {
     width: 75,
     x: (canvas.width-75)/2,
     y: canvas.height - 10,
-    fillStyle: "#0095DD"
+    fillStyle: "#905"
 }
 
 paddle.draw = function() {
@@ -101,6 +104,11 @@ paddle.draw = function() {
 
 paddle.update = function() {
     paddle.input();
+    if (paddle.x < 0) {
+        paddle.x = 0;
+    } else if (paddle.x > canvas.width-paddle.width) {
+        paddle.x = canvas.width-paddle.width;
+    }
 }
 
 paddle.input = function() {
