@@ -6,6 +6,7 @@ canvas.height = 400;
 canvas.width = 300;
 
 function startGame() {
+    bricks.init();
     loop();
 }
 
@@ -31,6 +32,7 @@ function update() {
     // check state and stuff.
     ball.update();
     paddle.update();
+    walls.update();
 }
 
 /**
@@ -42,20 +44,22 @@ function draw() {
     // draw stuff
     ball.draw();
     paddle.draw();
+    walls.draw();
+    bricks.draw();
 }
 
 // Object for storing state and behaviour for ball that bounces all over
 // the game screen.
 var ball = {
-    x: canvas.width/2,
-    y: canvas.height-30,
+    x: canvas.width / 2,
+    y: canvas.height - 30,
     dx: 2,
     dy: -2,
     fillStyle: "#07a",
     radius: 10
-}
+};
 
-ball.draw = function() {
+ball.draw = function () {
     context.beginPath();
     context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
     context.fillStyle = ball.fillStyle;
@@ -63,38 +67,44 @@ ball.draw = function() {
     context.closePath();
 }
 
-ball.update = function() {
+ball.update = function () {
     // ball collision detection for walls
-    if (ball.x + ball.dx < ball.radius || ball.x + ball.dx > canvas.width-ball.radius) {
+    if (ball.x + ball.dx < ball.radius || ball.x + ball.dx > canvas.width - ball.radius) {
         ball.dx = -ball.dx;
+        // walls.level = 5;
     }
-    // ball hitting paddle
-    if (ball.y + ball.dy > canvas.height-ball.radius-paddle.height &&
-        ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
-        ball.dy = -ball.dy;
-    }
-    // ball hitting roof or missing paddle
+    // ball hitting top
     if (ball.y + ball.dy < ball.radius) {
         ball.dy = -ball.dy;
-    } else if (ball.y + ball.dy > canvas.height-ball.radius) {
+        // walls.level = 5;
+    }
+    // ball hitting paddle
+    if ((ball.y + ball.dy > canvas.height - ball.radius - paddle.height) &&
+        (ball.x > paddle.x && ball.x < paddle.x + paddle.width)) {
+        ball.dy = -ball.dy;
+        walls.level = 5;
+    }
+    if (ball.y + ball.dy > 400) {
         alert("GAME OVER");
         document.location.reload();
     }
-    
+
     ball.x += ball.dx;
     ball.y += ball.dy;
 }
 
-// Game paddle properties and behaviour.
+/**
+ * Game paddle properties and behavior
+ */
 var paddle = {
     height: 10,
     width: 75,
-    x: (canvas.width-75)/2,
+    x: (canvas.width - 75) / 2,
     y: canvas.height - 10,
     fillStyle: "#905"
-}
+};
 
-paddle.draw = function() {
+paddle.draw = function () {
     context.beginPath();
     context.rect(paddle.x, paddle.y, paddle.width, paddle.height);
     context.fillStyle = paddle.fillStyle;
@@ -102,16 +112,16 @@ paddle.draw = function() {
     context.closePath();
 }
 
-paddle.update = function() {
+paddle.update = function () {
     paddle.input();
     if (paddle.x < 0) {
         paddle.x = 0;
-    } else if (paddle.x > canvas.width-paddle.width) {
-        paddle.x = canvas.width-paddle.width;
+    } else if (paddle.x > canvas.width - paddle.width) {
+        paddle.x = canvas.width - paddle.width;
     }
 }
 
-paddle.input = function() {
+paddle.input = function () {
     // left
     if (37 in keysDown) {
         paddle.x -= 7;
@@ -122,33 +132,87 @@ paddle.input = function() {
     }
 }
 
+var walls = {
+    level: 0,
+    colour: [
+        "border: 1px solid #ddd; background: #eaeaea;",
+        "border: 1px solid #e0cbcb; background: #e0cbcb;",
+        "border: 1px solid #e6a6a6; background: #e3b8b8;",
+        "border: 1px solid #eb8181; background: #e6a6a6;",
+        "border: 1px solid #f15c5c; background: #e89393;",
+    ],
+    updateStyle: false
+};
+
+walls.update = function () {
+    if (walls.level > 0) {
+        walls.level--;
+        walls.updateStyle = true;
+    }
+}
+
+walls.draw = function () {
+    if (walls.updateStyle) {
+        canvas.style = walls.colour[walls.level];
+        walls.updateStyle = false;
+    }
+}
+
+/**
+ * Bricks properties, initialisation and behaviours.
+ */
+var bricks = {
+    width: 45,
+    height: 15,
+    padding: 12,
+    rowCount: 4,
+    columnCount: 5,
+    offsetTop: 0,
+    offsetLeft: 0,
+    fillStyle: "#690",
+    matrix: []
+};
+
+bricks.init = function () {
+    var totalBricks = bricks.rowCount * bricks.columnCount;
+    for (i = 0; i < totalBricks; i++) {
+        var col = i % bricks.columnCount;
+        var row = Math.floor(i / bricks.columnCount);
+        var newX = col * bricks.width + bricks.padding * (col + 1) + bricks.offsetLeft;
+        var newY = row * bricks.height + bricks.padding * (row +1) + bricks.offsetTop;
+        bricks.matrix.push({
+            x: newX,
+            y: newY,
+            status: 1
+        });
+    }
+}
+
+bricks.draw = function () {
+    bricks.matrix.forEach(function (item, index, array) {
+        if (item.status) {
+            context.beginPath();
+            context.rect(item.x, item.y, bricks.width, bricks.height);
+            context.fillStyle = bricks.fillStyle;
+            context.fill();
+            context.closePath();
+        }
+    });
+}
+
 // Keyboard input events
 var keysDown = {};
 
-window.addEventListener('keydown', function(event) {
+window.addEventListener('keydown', function (event) {
     keysDown[event.keyCode] = true;
     if (event.keyCode >= 37 && event.keyCode <= 40) {
         event.preventDefault();
     }
 });
 
-window.addEventListener('keyup', function(event) {
+window.addEventListener('keyup', function (event) {
     delete keysDown[event.keyCode];
 });
 
 // Trigger the game loop et al.
 startGame();
-
-// ctx.beginPath();
-// ctx.rect(20, 40, 50, 50);
-// ctx.fillStyle = "#ff0000";
-// ctx.fill();
-// ctx.closePath();
-
-// ctx.beginPath();
-// ctx.arc(240, 160, 20, 0, Math.PI*2, false);
-// ctx.fillStyle = "green";
-// ctx.strokeStyle = "rgba(0, 0, 255, 0.5)";
-// ctx.stroke();
-// ctx.fill();
-// ctx.closePath();
