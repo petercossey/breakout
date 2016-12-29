@@ -33,6 +33,8 @@ function update() {
     ball.update();
     paddle.update();
     walls.update();
+    bricks.update();
+    score.update();
 }
 
 /**
@@ -46,6 +48,7 @@ function draw() {
     paddle.draw();
     walls.draw();
     bricks.draw();
+    score.draw();
 }
 
 // Object for storing state and behaviour for ball that bounces all over
@@ -198,6 +201,72 @@ bricks.draw = function () {
             context.closePath();
         }
     });
+}
+
+bricks.update = function() {
+    bricks.matrix.forEach(function (item, index, array) {
+        if (item.status) {
+            // Naive collision detection for each brick and ball.
+            if (collisionDetected({
+                x: item.x,
+                y: item.y,
+                width: bricks.width,
+                height: bricks.height
+            }, {
+                x: ball.x,
+                y: ball.y,
+                width: ball.radius * 2,
+                height: ball.radius * 2
+            })) {
+                console.log('brick ' + index + ' got hit.')
+                bricks.matrix[index].status = 0;
+                ball.dy = -ball.dy;
+                ball.dx = -ball.dx;
+                score.total++;
+            }
+        }
+    })
+}
+
+/**
+ * Score properties and behaviours
+ */
+var score = {
+    total: 0,
+    fillStyle: "#ffe070",
+    x: 8,
+    y: 20,
+    board: "Score: 0"
+};
+
+score.update = function() {
+    score.board = "Score: " + score.total;
+}
+
+score.draw = function() {
+    context.font = "16px Arial";
+    context.fillStyle = score.fillStyle;
+    context.fillText(score.board, score.x, score.y);
+}
+
+/**
+ * Collision detection (bounding box)
+ * 
+ * @param {box1} Object This is a param representing a bounding box. The
+ *      object has 4 keys: x, y, width, height.
+ * @param {box2} Object Same as box1
+ * @return {boolean} If there is a collision between the two objects the
+ *      function will return true, otherwise it will return false.
+ */
+function collisionDetected(box1, box2) {
+    if (box1.x < box2.x + box2.width &&
+        box1.x + box1.width > box2.x &&
+        box1.height + box1.y > box2.y) {
+        // collision detected
+        return true;
+    } else {
+        return false;
+    }
 }
 
 // Keyboard input events
