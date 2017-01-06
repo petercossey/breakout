@@ -1,4 +1,6 @@
-// alert('hello world');
+/**
+ * Setup Canvas element (our game screen)
+ */
 
 var canvas = document.getElementById('gameCanvas');
 var context = canvas.getContext("2d");
